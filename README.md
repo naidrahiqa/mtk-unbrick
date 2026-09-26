@@ -4,11 +4,11 @@
 
 **One-click unbrick tool untuk Xiaomi MTK devices via BROM mode**
 
-Bypass auth dongle (SLA/DAA/SBC) dan flash firmware tanpa ribet.
+Backend: [bkerler/mtkclient](https://github.com/bkerler/mtkclient) — auth bypass (SLA/DAA/SBC), DA upload, DRAM setup.
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Linux](https://img.shields.io/badge/platform-linux-lightgrey.svg)]()
+[![Linux](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgreen.svg)]()
 
 </div>
 
@@ -16,250 +16,110 @@ Bypass auth dongle (SLA/DAA/SBC) dan flash firmware tanpa ribet.
 
 ## Fitur
 
-- **Auto-detect** device di BROM/Preloader mode
-- **Auth bypass** (SLA/DAA/SBC) via exploit - ga perlu dongle lagi
-- **Flash** firmware dari extracted fastboot ROM folder
-- **Interactive mode** dengan tab completion path
-- **Read/Erase** partitions
-- **Backup** critical partitions (nvram, seccfg, dll)
-- **Standalone script** - ga perlu install, tinggal `python3 mtk_unbrick.py`
-
-## Demo
-
-```
-$ ./unbrick.sh
-
-  __  __ _ __  __        ____  _             _
- |  \/  (_)  \/  |  ___ | __ )(_) _ __   __| | ___ _ __
- | |\/| | | |\/| | / _ \|  _ \| || '_ \ / _` |/ _ \ '__|
- | |  | | | |  | ||  __/| |_) | || | | | (_| |  __/ |
- |_|  |_|_|_|  |_| \___||____/|_||_| |_|\__,_|\___|_|
-                    v0.1.0 - BROM Unbrick Tool
-
-==========================================
-  MTK Unbrick - Interactive Mode
-==========================================
-  1) Flash firmware
-  2) Flash (skip confirmation)
-  3) Flash (skip userdata)
-  4) Show device info
-  5) Exit
-==========================================
-Select [1-5]: 1
-
-==========================================
-  Enter ROM folder path
-  (drag & drop folder here, then press Enter)
-==========================================
-ROM Folder: ~/Downloads/miui_FIRE_V14.0.25.6.9.DEV
-  -> /home/user/Downloads/miui_FIRE_V14.0.25.6.9.DEV
-
-  Auto-detected scatter: MT6768_Android_scatter.txt
-  Use this? [Y/n] Y
-
-==========================================
-Partition            Size            File
-----------------------------------------------
-preloader            256.0KB         preloader_fire.bin
-partition1           128.0KB         pgpt.bin
-boot                 32.0MB          boot.img
-...
-==========================================
-Total: 25 partitions
-
-Proceed? [y/N] y
-
-Waiting for MTK device... (Vol+ + Vol- and plug USB)
-Device connected: 0xe8d:0x3
-
-Writing boot (33554432 bytes) to 0x10000000
-  boot OK
-Writing system (2147483648 bytes) to 0x1a280000
-  system OK
-...
-
-Done: 25/25 partitions flashed
-```
+- **Menu interaktif** — jalankan tanpa argumen, tinggal pilih angka (Linux & Windows)
+- **Flash folder ROM** — map file `*.img` ke partisi via GPT device (scatter **tidak** wajib)
+- **Auto A/B** — `boot.img` otomatis ke `boot_a` + `boot_b` (atau `--slot a|b`)
+- **Auto `--preloader`** — preloader di folder ROM dipakai otomatis buat DRAM setup
+- **Safety guard** — `preloader`/`lk`/`nvram`/`seccfg` dll tidak di-flash tanpa `--force`; preloader **tidak pernah** di-flash, hanya helper
+- **Backup** — dump partisi kritis (`lk`, `seccfg`, `nvram`, ...) sekali jalan
+- **Read / erase / reset** partisi individual
 
 ## Instalasi
 
-### Option 1: Standalone (ga perlu install)
+### Linux
 
 ```bash
+# 1. mtkclient (backend) + deps-nya
+git clone https://github.com/bkerler/mtkclient ~/mtkclient
+pip install -r ~/mtkclient/requirements.txt   # atau: pip3 install --user -r ...
+
+# 2. tool ini
 git clone https://github.com/naidrahiqa/mtk-unbrick.git
 cd mtk-unbrick
-pip install pyusb
-chmod +x unbrick.sh mtk_unbrick.py
-./unbrick.sh
+chmod +x unbrick.sh
+
+# 3. USB permission sekali saja (tanpa ini perlu sudo terus)
+sudo cp 50-mtkclient.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-### Option 2: Install sebagai package
+### Windows
 
-```bash
+```powershell
+# 1. Install Python 3.8+ (centang "Add python.exe to PATH")
+# 2. mtkclient (backend)
+git clone https://github.com/bkerler/mtkclient %USERPROFILE%\mtkclient
+pip install -r %USERPROFILE%\mtkclient\requirements.txt
+
+# 3. tool ini
 git clone https://github.com/naidrahiqa/mtk-unbrick.git
-cd mtk-unbrick
-pip install -e .
-mtk-unbrick flash ./firmware/
 ```
 
-### Requirements
+> **Windows:** install driver MediaTek Preloader / DA USB bila device tidak terdeteksi
+> (biasanya otomatis kalau pernah pakai SP Flash Tool). Firewall/antivirus
+> kadang perlu diizinkan untuk `python.exe`.
 
-- **Python 3.8+**
-- **pyusb** (`pip install pyusb`)
-- **libusb** (Linux: `sudo apt install libusb-1.0-0`)
-- **USB access** (Linux: `sudo usermod -aG dialout $USER` lalu relogin)
+mtkclient dicari otomatis di `./mtkclient/`, `../mtkclient/`, `~/mtkclient/`
+(`%USERPROFILE%\mtkclient` di Windows), atau lewat `--mtkclient /path/to/mtk.py`
+/ env `MTKCLIENT`.
 
-## Cara Pakai
+## Pemakaian
 
-### Interactive Mode
+### Menu interaktif (recommended)
+
+```
+Linux   : ./unbrick.sh            (atau: python3 mtk_unbrick.py)
+Windows : unbrick.bat             (double-click juga bisa)
+```
+
+Pilih menu → masukkan folder ROM → ikuti konfirmasi.
+
+### Command line
 
 ```bash
-./unbrick.sh
-# atau
-python3 mtk_unbrick.py
+# Info device + tabel partisi (tes koneksi BROM)
+./unbrick.sh info
+
+# Flash semua image di folder ROM (konfirmasi dulu)
+./unbrick.sh flash ~/Downloads/miui_SELENEGlobal_V14.0.7.0
+
+# Tanpa konfirmasi, skip userdata, slot A saja
+python3 mtk_unbrick.py flash ./rom -y --skip-userdata --slot a
+
+# Backup partisi kritis (sebelum utak-atik!)
+python3 mtk_unbrick.py backup ./backup
+
+# Read / erase satu partisi
+python3 mtk_unbrick.py read lk_a ./lk_a_backup.img
+python3 mtk_unbrick.py erase userdata
 ```
 
-Langsung masuk menu, tinggal pilih opsi dan masukin path.
+Windows: ganti `./unbrick.sh` dengan `unbrick.bat` atau `py -3 mtk_unbrick.py`.
 
-### Flash Firmware
+### Cara masuk BROM mode
 
-```bash
-# Basic flash
-./unbrick.sh flash ~/Downloads/miui_FIRE/
+1. Matikan HP (tahan power ~10 detik)
+2. Tahan **Vol+ + Vol-**
+3. Colok USB ke PC (kabel data, port langsung, jangan hub)
+4. mtkclient auto-detect `0e8d:xxxx` dan bypass auth
 
-# Skip confirmation
-./unbrick.sh flash ~/Downloads/miui_FIRE/ -y
+### Troubleshooting
 
-# Skip userdata (ga wipe data)
-./unbrick.sh flash ~/Downloads/miui_FIRE/ --skip-userdata
+| Error | Solusi |
+|---|---|
+| `DRAM setup failed: unpack requires a buffer of 12 bytes` | Kasih `--preloader preloader.img` (auto kalau file ada di folder ROM) |
+| `mtkclient not found` | Clone bkerler/mtkclient atau set `--mtkclient` |
+| Device not found (Linux) | Cek `lsusb`; pasang udev rule / jalankan dengan `sudo` |
+| Device not found (Windows) | Cek Device Manager, install driver MediaTek Preloader |
+| Gagal di tengah flashing | Cabut → tahan Vol+ + Vol- → colok → ulangi partisi yang gagal |
+| `Permission denied` /libusb | Linux: pakai udev rule atau `sudo` |
 
-# Pakai scatter file spesifik
-./unbrick.sh flash ~/Downloads/miui_FIRE/ -s MT6768_Android_scatter.txt
-```
+## Peringatan
 
-### Standalone Python Script
+- **Jangan flash `preloader`/`lk`/`nvram`/`nvdata`** tanpa gambaran jelas — bisa hard brick / hilang IMEI
+- Backup dulu (`backup`) sebelum flash apa pun
+- Tool ini sengaja **tidak** menyentuh partisi berbahaya tanpa `--force`
 
-```bash
-python3 mtk_unbrick.py flash ~/Downloads/miui_FIRE/
-python3 mtk_unbrick.py flash ~/Downloads/miui_FIRE/ -y
-python3 mtk_unbrick.py info
-```
+## Lisensi
 
-### Install sebagai CLI Tool
-
-```bash
-pip install -e .
-mtk-unbrick flash ~/Downloads/miui_FIRE/
-mtk-unbrick info
-```
-
-## Masuk BROM Mode
-
-1. **Power off** device完全
-2. Tahan **Volume Up + Volume Down** barengan
-3. Colok USB kabel sambil tahan tombol
-4. Tunggu device kedetect
-
-> **Tips:** Colok kabel USB 2.0 (bukan 3.0). Pakai kabel data original.
-
-### Troubleshooting BROM
-
-| Masalah | Solusi |
-|---------|--------|
-| Device ga kedetect | Coba port USB lain, pastikan kabel data |
-| Detected tapi timeout | Driver USB belum keinstall |
-| BROM flash gagal | Coba `--skip-userdata`, atau backup dulu |
-
-## Supported Devices
-
-Tool ini works untuk semua MTK Xiaomi devices, termasuk:
-
-| Device | Codename | Chipset |
-|--------|----------|---------|
-| Redmi 12 | fire | MT6768 |
-| Redmi 10 | selene | MT6768 |
-| Redmi 9C | - | MT6765 |
-| Redmi Note 9 | - | MT6768 |
-| Redmi Note 10S | - | MT6768 |
-| Poco M3 | - | MT6768 |
-| Poco X3 Pro | - | MT6768 |
-| Redmi 9A/9C | - | MT6765 |
-| Dan semua MTK Xiaomi lainnya | | |
-
-## Project Structure
-
-```
-mtk-unbrick/
-├── unbrick.sh              # Shell script launcher (main entry point)
-├── mtk_unbrick.py          # Standalone Python script
-├── mtk_unbrick/            # Package version
-│   ├── cli.py              # CLI entry point
-│   ├── device.py           # USB device detection
-│   ├── scatter.py          # Scatter file parser
-│   ├── flasher.py          # Flash engine
-│   └── utils.py            # Utilities
-├── exploits/
-│   ├── kamakiri.py         # Kamakiri2 exploit (V5)
-│   ├── heapbait.py         # Heapbait exploit
-│   └── carbonara.py        # Carbonara exploit (V5/V6)
-├── payloads/               # Binary payloads
-├── setup.py
-├── requirements.txt
-└── README.md
-```
-
-## Exploit yang Didukung
-
-| Exploit | Target | Status |
-|---------|--------|--------|
-| **Kamakiri2** | V5 devices (pre-MT6853) | Working |
-| **Heapbait** | V5 devices | Working |
-| **Carbonara** | V5/V6 devices | Working |
-
-### Cara Kerja Auth Bypass
-
-```
-Normal Flow:
-Device → BROM → SLA/DAA Check → Flash (Butuh Auth Dongle)
-
-Dengan Tool:
-Device → BROM → Kamakiri2 Exploit → Bypass SLA/DAA → Flash (Tanpa Dongle)
-```
-
-## Kontribusi
-
-Contributions welcome! Buka issue atau PR di GitHub.
-
-```bash
-git clone https://github.com/naidrahiqa/mtk-unbrick.git
-cd mtk-unbrick
-# Buat branch baru
-git checkout -b feature/fitur-baru
-# Commit changes
-git commit -m "Add fitur baru"
-# Push
-git push origin feature/fitur-baru
-# Buka PR
-```
-
-## Credits
-
-- [mtkclient](https://github.com/bkerler/mtkclient) - B.Kerler (exploit engine)
-- [penumbra](https://github.com/shomykohai/penumbra) - shomykohai (Rust MTK tool)
-- [kamakiri exploit](https://blog.r0rt1z2.com/posts/dissecting-a-mantis/) - R0rt1z2
-- [heapbait exploit](https://github.com/chimera) - chimera team
-- [Xiaomi MTK unlock](https://github.com/Jz8Root/xiaomi-hyperos-bootloader-unlock) - Jz8Root
-
-## License
-
-[GPL-3.0](LICENSE) - Free software, open source.
-
----
-
-<div align="center">
-
-**WARNING: Gunakan tool ini dengan bijak. Author tidak bertanggung jawab atas kerusakan device.**
-
-Made with ❤️ for Xiaomi MTK community
-
-</div>
+GPL v3 — lihat [LICENSE](LICENSE).

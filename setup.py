@@ -2,15 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="mtk-unbrick",
-    version="0.1.0",
-    description="One-click unbrick tool for Xiaomi MTK devices via BROM",
+    version="0.2.0",
+    description="One-click unbrick tool for Xiaomi MTK devices via BROM (mtkclient backend)",
     author="naidrahiqa",
     packages=find_packages(),
-    install_requires=[
-        "pyusb>=1.2.0",
-        "pyserial>=3.5",
-        "construct>=2.10",
-    ],
+    install_requires=[],
     entry_points={
         "console_scripts": [
             "mtk-unbrick=mtk_unbrick.cli:main",

@@ -1,2 +1,2 @@
-"""MTK Unbrick - One-click unbrick tool for Xiaomi MTK devices"""
-__version__ = "0.1.0"
+"""MTK Unbrick - One-click unbrick tool for Xiaomi MTK devices (mtkclient backend)"""
+__version__ = "0.2.0"

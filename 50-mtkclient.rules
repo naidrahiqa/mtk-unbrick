@@ -1,0 +1,4 @@
+# mtkclient BROM/Preloader USB access without root
+# Install: sudo cp 50-mtkclient.rules /etc/udev/rules.d/
+#          sudo udevadm control --reload-rules && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTR{idVendor}=="0e8d", MODE="0666", TAG+="uaccess"
